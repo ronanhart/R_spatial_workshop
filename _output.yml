@@ -6,7 +6,7 @@ bookdown::gitbook:
         <li><a href="./">Ecology Center: R Spatial Workshop</a></li>
       after: |
         <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
-    edit: https://https://github.com/ronanhart/R_spatial_workshop
+    edit: https://https://github.com/ronanhart/R_spatial_workshop/%s
     download: ["pdf", "epub"]
 bookdown::pdf_book:
   includes:

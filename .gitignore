@@ -12,3 +12,5 @@ _book/*
 *.bib
 *.tex
 docs/*
+data/*
+pictures/*

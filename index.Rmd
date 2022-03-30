@@ -15,6 +15,16 @@ link-citations: yes
 github-repo: ronanhart/R_spatial_workshop
 ---
 
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<style>
+p.caption {
+  font-size: 0.7em;
+}
+</style>
+
 # Welcome to the Ecology Center's Workshop on R Spatial! 
 
 In this workshop we will cover: 
@@ -25,12 +35,14 @@ In this workshop we will cover:
 
 We will **NOT** be covering how to make a nice-looking map (for figures, presentations, etc.) That will be covered in the next workshop, so be sure to keep an eye out for that if you want to learn how to make maps in R!
 
+--------------------------------------------------------------------------------------------------------------
+
 **Goals of this workshop:**
 
 * Reiterate the basics of GIS
 * Teach you the processes that you might have learned in ArcGIS or other GIS software that you can code yourself in R
 
-## Why GIS in R?
+## Why GIS in R? {-}
 
 You may be asking why you even need to learn how to code spatial processes in R, especially if you already know how to use ArcGIS. (Well, maybe you're not actually asking that question if you’re taking this class.) But here are a few reasons why:
 
@@ -50,4 +62,42 @@ Reproducibility and customization are not unique to R but rather an advantage to
 
 Not to say that programs such as ArcGIS should never be used. On the contrary, since it was the way I first learned GIS, I will sometimes return to it to make a map on the fly or quickly visualize and double-check a polygon or raster. All programs have their pros and cons, and this workshop is to simply add another tool in your spatial analysis toolbox. 
 
-So let's get started!
+--------------------------------------------------------------------------------------------------------------
+
+## Prerequisites, Packages, and Preparation {-}
+
+Before we begin, please be sure you have done the follow preparations:
+
+1. Make sure you have a recent version of [R](https://cran.r-project.org/) and [RStudio](https://www.rstudio.com/) installed
+  + to check your version of R, type `R.version` in the console. `version.string` will have the version number and its release date. The most recent version (as of 2022-03-30) is 4.1.3 (released on 2022-03-10). **Version 4.1.2 is perfectly fine for this workshop.**
+  + to check your version of RStudio, Go to Help (in the toolbar at the top) > Check for Updates. RStudio 2022.02.1+461 is the most recent version. **Version 2021.09.2+382 is perfectly fine for this workshop.**
+  
+```{r help, fig.align = 'center', out.width = '25%', echo = F}
+knitr::include_graphics("pictures/help.png")
+```
+
+2. Install (if needed) and load the following packages:
+
+```{r installDemo, echo = T, eval = F}
+install.packages("maps")
+install.packages("raster")
+install.packages("rgdal")
+install.packages("rgeos")
+install.packages("sf")
+install.packages("sp")
+install.packages("tidyverse")
+```
+
+```{r packages, echo = T, eval = T, message = F}
+library(maps)
+library(raster)
+library(rgdal)
+library(rgeos)
+library(sf)
+library(sp)
+library(tidyverse)
+```
+
+3. (Optional but recommended) Create a new RStudio project. This will make it easier to access files within your code and keep everything organized.
+
+After taking care of that, let's get started!
