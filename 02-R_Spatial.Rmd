@@ -4,10 +4,332 @@
 
 The primary packages that deal with these features are [`sf`](https://cran.r-project.org/web/packages/sf/index.html) and [`sp`](https://cran.r-project.org/web/packages/sp/index.html)
 
-**sf** means "simple feature" while **sp** is short for "spatial." There are pros and cons to both (for example, a lot of other packages depend on `sp`, `sf` works well in `tidyverse`, etc.). However, in my opinion, there is no reason that you can't use both in the same code, if needed. We will go over these packages in the next chapter.
+**sf** means "simple feature" while **sp** is short for "spatial." There are pros and cons to both (for example, a lot of other packages depend on `sp`, `sf` works well in `tidyverse`, etc.). However, in my opinion, there is no reason that you can't use both in the same code, if needed. [This website](https://cengel.github.io/R-spatial/intro.html#conceptualizing-spatial-vector-objects-in-r) goes into more detail about these packages and the specifics about objects from these packages. 
 
---------------------------------------------------------------------------------------------------------------
+**[maybe put some of that detail here]**
+
+### Loading vector data from a spreadsheet
+
+You will often have a spreadsheet of data that have two columns of latitude and longitude (and potentially other columns for the attributes of these features). 
+
+```{r loadCSV, echo = T, eval = T}
+sites <- read.csv("data/Sites.csv")
+head(sites)
+class(sites)
+```
+
+How can we convert this data table into a spatial object? 
+
+#### With sf {-}
+
+We'll use the function `st_as_sf()` to convert an object of another class to an `sf` object. As with any function, you can always type `?st_as_sf` in the console to remind yourself what the function does and what arguments you need to add. In this case, the non-optional arguments are `x` (the object we want to convert, in this case our sites data frame) and `coords` (the columns in the data frame that have the coordinate data). 
+
+The argument `crs` is optional but we should add it so that our spatial object has a coordinate reference system. Because our coordinates are lat/long, we should tell `st_as_sf` that our crs is WGS84 lat/long (Remember that the EPSG code for WGS84 lat/long is [4326](https://www.spatialreference.org/ref/epsg/4326/)). **Note: Even if you're working in a different geographic or projection coordinate system, it is ALWAYS good practice to load in lat/long coordinates as WGS84 lat/long and then later projecting the object, instead of right away giving it a projected coordinate system.** This is because GPS coordinates work with a global datum (being a **global** positioning system), and you might have inaccurate positions if you load it in with another datum or projection.
+
+```{r stAsSf, eval = T, echo = T}
+sites_sf <- st_as_sf(sites, 
+                     coords = c("Longitude", "Latitude"), 
+                     crs = 4326)
+head(sites_sf)
+```
+
+Now when we look at the `head` of `sites_sf` it also prints out some information about this spatial object: it is a simple feature, it is a `POINT` object, the min/max coordinates (the bounding box), and the CRS. Note that the "Longitude" and "Latitude" columns turned into a "geometry" column. We can also check this information with separate functions: `st_bbox` and `st_crs`
+
+```{r checkSFinfo, eval = T, echo = T}
+st_bbox(sites_sf)
+
+st_crs(sites_sf)
+```
+
+`st_crs` printed out a lot of information, but the important things to note are that we (the user) inputted EPSG: 4326, its datum is "World Geodetic System 1984" (or WGS 84), its axes are latitude and longitude, and its units are "degree" (as opposed to a linear unit like m that we might see in a projected crs). It's always good practice to double check the CRS of your object before you perform any analysis. 
+
+Note that now when we look at the `class` of `sites_sf` it has **two** classes: `sf` and `data.frame`.
+
+```{r classSF, eval = T, eval = T}
+class(sites_sf)
+```
+
+This is one of the great things about `sf`: because `sf` objects remain as class `data.frame`, it makes it easy to work with an `sf` object like you would with any data frame.
+
+Now that it's a spatial object, let's plot it and see what it looks like!
+
+```{r plotBase, eval = T, echo = T}
+plot(sites_sf)
+```
+
+Remember that this object has two attributes: "Site" and "Habitat_Type". So plotting in base R (i.e. using the `plot` function) plots all attributes (it will actually only plot 10 and will give you a warning if there are more than 10 attributes).
+
+To just plot the feature's shape, we can use `st_geometry` to extract the geometry of the vector
+
+```{r plotBase2, eval = F, echo = T}
+plot(st_geometry(sites_sf))
+```
+
+We can also use `ggplot2` to plot `sf` objects. `ggplot2` has a function called `geom_sf`, which makes it easy to visualize `sf` objects with `ggplot2`
+
+```{r sfGGplot, eval = T, echo = T}
+ggplot(sites_sf) +
+  geom_sf() # note that we don't need to tell ggplot what it should consider x and y to be; that's already built in with the "geometry" column!
+```
+
+Remember, though, that this workshop will not cover how to make nice maps in R (that will be in the next workshop). I just bring this up because you would want to be sure the data you're working with looks like what you might expect it to, so you would want to make a quick plot before moving on to analysis.
+
+#### With `sp` {-}
+
+Let's do the same thing but now with the `sp` package. We'll use the function `coordinates`. This function will pull the coordinates from an object of class `Spatial`, but it will also assign coordinates to an object of class `data.frame` and automatically convert it to a `Spatial` object by following this format:
+
+```{r coordinatesEx, echo = T, eval = F}
+coordinates(my_dataframe) <- c("x", "y") # x & y are the NAMES of the columns
+# OR
+coordinates(my_dataframe) <- c(1, 2) # 1 & 2 are the INDICES of the columns
+```
+
+I'm first going to make a duplicate object of "sites" called "sites_sp" because `coordinates` will overwrite the original `data.frame` object into a `Spatial` object (which is not necessarily a bad thing, but sometimes you want to keep all your objects separate in case you need to use the original data frame for some reason)
+
+```{r sp, echo = T, eval = T}
+sites_sp <- sites
+coordinates(sites_sp) <- c("Longitude", "Latitude")
+sites_sp
+```
+
+Just like with `sf`, printing the object in `sp` will also show some information about that object, namely the class, extent, and CRS. And just like with `sf` we can use functions to look at this information for a `Spatial` object: `class`, `bbox`, and `proj4string`
+
+```{r checkSPinfo, eval = T, echo = T}
+class(sites_sp)
+
+bbox(sites_sp)
+
+proj4string(sites_sp)
+```
+
+The CRS right now is `NA`. With `sf` we were able to assign a CRS while also converting the data frame to a simple feature, but with `sp` we need to do that in a separate step. We'll use `proj4string` again as this function not only checks the CRS of a spatial object but can also be used to assign a CRS. In `sf`,  we could give the function the EPSG code itself, but in `sp` we need to give it a character string wrapped in the function `CRS`. There are a few ways to write this character string, but the easiest one to remember, in my opinion, follows this format: `"+init=epsg:####"` (where #### would be the EPSG code)
+
+```{r assignCRS, eval = T, echo = T, warning = FALSE}
+proj4string(sites_sp) <- CRS("+init=epsg:4326")
+proj4string(sites_sp)
+```
+
+Great! Now let's plot it to make sure it looks like what we would expect it to
+
+```{r plotSP, eval = T, echo = T}
+plot(sites_sp, 
+     pch = 16) # it defaults, for some reason, to a cross shape, so this changes it to a filled in circle
+```
+
+It is not as straightforward to plot an object of class `Spatial` with ggplot2 as it was with `sf`, so I would recommend either converting the object to `sf` (which we will cover later in this chapter) or just plotting from the data frame
+
+```{r pointsGGplot, eval = T, echo = T}
+ggplot(sites) +
+  geom_point(aes(x = Longitude, y = Latitude))
+
+```
+
+### Loading vector data
+
+A lot of the time, you will have spatial data already saved as a shapefile. How do we load that into R?
+
+#### with sf {-}
+
+We'll use the function `st_read` which takes two arguments: `dsn` (data source name), which is essentially the folder where the shapefile is located, and `layer`, which is the name of file (without any extensions). `layer` is technically optional because `dsn` will choose the first file in that folder, so if the shapefile is the only file in that folder, then `dsn` will automatically choose the file. But I like to specify the layer name to avoid any mishaps.
+
+```{r stRead, echo = T, eval = T}
+# Shapefile: freeways in Utah
+fwy_sf <- st_read(dsn = "data/utah_freeway", layer = "utah_freeway")
+```
+You'll note that as we read in a shapefile with `st_read`, it automatically prints out the information about this feature (if you don't want R to print this, put `quiet = FALSE` in the function).
+
+Again, we can check this information separately (in case we forget or we need to check later in the analysis). We can also check the first few rows of the data frame to see what kind of attributes there are, and we can plot the feature to make sure it looks like what we expect it to be.
+
+```{r checkSF2, echo = T, eval = T}
+st_bbox(fwy_sf)
+st_crs(fwy_sf)
+head(fwy_sf)
+ggplot(fwy_sf) +
+  geom_sf()
+```
+
+#### with sp {-}
+
+To read in spatial data as an object in the `Spatial` family, we need to use the `rgdal` package. (When you load in `rgdal`, it will also automatically load in `sp`). We'll use the `rgdal` function `readOGR`. This function is similar to `st_read` in that its arguments are `dsn` and `layer` which work exactly the same way as they do in `st_read`
+
+```{r readOGR, eval = T, echo = T}
+fwy_sp <- readOGR(dsn = "data/utah_freeway", layer = "utah_freeway")
+```
+
+`read_OGR`, also like `st_read`, will print out some information after reading in the shapefile. If you want to turn this off, you can add `verbose = FALSE` in the function's arguments.
+
+Let's check the feature's information (class, extent, and CRS) and plot it
+
+```{r checkSP2, eval = T, echo = T, warning = F}
+class(fwy_sp)
+bbox(fwy_sp)
+proj4string(fwy_sp)
+plot(fwy_sp)
+```
+
+### Projecting vector data
+
+So far all of our vector data has only been in WGS 84 lat/long CRS. More than likely you will want to work in a projected coordinate system. So how do we re-project (or transform) features in R?
+
+* In `sf` we'll use the function `st_transform()`
+* In `sp` we'll use the function `spTransform()`
+
+Both of these functions need the object you want to re-project and the target CRS. 
+
+What CRS should we work in? Like I said earlier, UTM is a popular projection because it's localized and allows you to work with with linear metrics like length, area, and distance. Since both of these features (our site data and Utah freeways) are located in Utah, we would use UTM 12N. We can stay in the WGS 84 datum, but for the purposes of demonstration, let's change to NAD83. (Remember from the previous chapter that there is not much difference between these datums, so it's up to you if you want to use a more localized datum (NAD83) or a more recent datum (WGS84)). The EPSG code for NAD83 UTM 12N is [26912](https://www.spatialreference.org/ref/epsg/26912/). (If you want to work in WGS84 UTM 12N, the EPSG code is [32612](https://www.spatialreference.org/ref/epsg/32612/))
+
+```{r transform, echo = T, eval = T, warning = F}
+# sf
+fwy_sf_proj <- st_transform(fwy_sf, crs = 26912)
+st_crs(fwy_sf_proj)
+
+# sp
+sites_sp_proj <- spTransform(sites_sp, "+init=epsg:26912")
+proj4string(sites_sp_proj)
+```
+
+Note that the coordinates of the WGS84 object compared the coordinates of the projected object are different.
+
+```{r checkCoords, echo = T, eval = F}
+st_geometry(fwy_sf)
+st_geometry(fwy_sf_proj)
+```
+
+The coordinates for the object in WGS84 are in lat/long and the units are decimal degrees. The coordiantes for the projected object are in UTM and the untis are meters. 
+
+**REMINDER:** You should **always** double-check the CRS of every feature and object you're working with because you want to make sure everything is projected to the **same** CRS! If they're not, it could result in inaccurate analysis and plotting. Depending on what functions you're using, R may give you a warning or error that the CRS of one feature and another don't match, but it's best not to rely on this and just double-check yourself.
+
+### Creating vector data
+
+### Saving vector data
+
+Once you've created or modified a spatial object, most likely you want to save it so you can use it later or share with collaborators. There are many files types that can hold spatial data, but the most commonly used are ESRI Shapefile (which can be used in ArcGIS software), KML (which can be used with Google Earth Engine), GeoJSON, and PostgreSQL. If you're curious what other file types are out there, you can use functions `st_drivers()` or `ogrDrivers()` for `sf` and `sp` respectively. In this workshop, I will focus just on ESRI Shapefiles.
+
+If you've worked with shapefiles before, you've likely noticed that a shapefile is actually a collection of files with the extensions .dbf, .prj, .shp, and .shx. It's often easier to organize and share shapefiles if they're in their own folder. If you don't already have a folder ready for any shapefiles that you're ready to save, you can, of course, manually make one in the File Explorer. But you can also create folders in R! I, personally, often like to do this because it helps streamline my process. To do so we'll use the functions `dir.exists()` to check if the directory (or folder) or not, and if it doesn't we'll use `dir.create()` to create a directory.
+
+```{r saveData, echo = T, eval = F}
+out_dir <- "data/Sites_shp" # name what you want the folder to be and save it in an object
+
+if(!dir.exists(out_dir)){ # this if statement is basically saying "if out_dir does NOT exist..." (the NOT is from the exclamation mark)
+  dir.create(out_dir) # and if out_dir does NOT exist, then dir.create will create it
+}
+```
+
+Now that we've created a new directory for this shapefile to go to, let's save our shapefile! For `sf` objects we'll use the function `st_write` and for `Spatial*` objects we'll use the function `writeOGR`. The arguments for these two functions are basically the same: they take the object you're saving, the dsn (or the folder) you want to save it to, the layer (or the name you want to save the file as, do NOT add an extension), and the driver (meaning if you're saving it as an ESRI Shapefile, KML, etc.)
+
+```{r save, eval = F, echo = T}
+# sf
+st_write(sites_sf, dsn = out_dir, layer = "Sites_sf", driver = "ESRI Shapefile")
+
+# sp
+writeOGR(sites_sp, dsn = out_dir, layer = "Sites_sp", driver = "ESRI Shapefile")
+```
+
+In reality I would only be working with either an `sf` object or a `Spatial*` object and I wouldn't save both (because once they're saved as a shapefile, they are exactly the same file).
+
+### Converting between `sf` and `sp`
+
+As I mentioned before, there is no reason to not use both `sf` and `Spatial*` objects in one piece of code, but it doesn't make sense to load or create a single object as both an `sf` and `Spatial*` class. In some cases it makes more sense to work with `sf` objects and then convert them to `Spatial*` if needed (or vice versa). Lucky for us, it's pretty easy to convert an `sf` object to `Spatial*` and then back to `sf`. For `sf` -> `Spatial*` we'll use the function `as()` or `as_Spatial()`. For `Spatial*` -> `sf` we'll use a function we've allready used: `st_as_sf()`
+
+```{r convertSfSpatial, eval = T, echo = T}
+# convert sf object to Spatial
+class(fwy_sf)
+fwy_sf_to_sp <- as_Spatial(fwy_sf)
+class(fwy_sf_to_sp)
+
+# you can also use the function as() and add an argument "Spatial"
+fwy_sf_to_sp_2 <- as(fwy_sf, "Spatial")
+identical(fwy_sf_to_sp, fwy_sf_to_sp_2) # they are exactly the same
+
+# convert Spatial object to sf
+class(fwy_sp)
+fwy_sp_to_sf <- st_as_sf(fwy_sp)
+class(fwy_sp_to_sf)
+```
+
+### A note about `sf` and `tidyverse` {-}
+
+As I mentioned earlier, `sf` works really well with `tidyverse`. If you are familiar with `tidyverse` then you know that one pro is the pipe (`%>%`) which lets you perform multiple functions at once without getting cluttered and hard to read. Functions for `sf` can easily be incorporated into the `tidyverse` piping method as well. For an example, we can load a csv file, covert it to an `sf` object, project it, and save it all at once using the pipes.
+
+```{r piping, eval = F, echo = T}
+read.csv("data/Sites.csv") %>%
+  st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) %>%
+  st_transform(crs = 26912) %>%
+  st_write(dsn = "data", layer = "Sites_shp", driver = "ESRI Shapefile")
+```
+
+Of course, this requires that you already know what the column names for the coordinates are, and this might not be the best example for a series of functions to use with the pipe. But this type of process is a useful tool to know, especially if you are already familiar with and frequently use `tidyverse`.
+
+--------------------------------------------------------------------------------------------------
 
 ## Rasters 
 
-The primary packages that deal with rasters are [`raster`](https://cran.r-project.org/web/packages/raster/index.html) and [`terra`](https://cran.r-project.org/web/packages/terra/index.html)
+The primary packages that deal with rasters are [`raster`](https://cran.r-project.org/web/packages/raster/index.html) and [`terra`](https://cran.r-project.org/web/packages/terra/index.html). (Note that `raster` depends on the `sp` package, as it loads `sp` automatically when you load `raster`)
+
+### Load a raster
+
+When you want to load a raster that is saved in a directory, you'll use the (aptly named) function `raster`. When loading a raster that is already saved, the only argument you need is the filename (including the directory and extension)
+
+```{r loadRaster, eval = T, echo = T}
+r <- raster("data/elevation.tif")
+r
+```
+When we examine the raster (by simply calling the object like we did above), we get a lot of useful information.
+
+* `class`: the class of the raster (this could be `RasterLayer`, `RasterStack`, or `RasterBrick`)
+* `dimensions`: the number of rows, columns, and cells
+* `resolution`: the size of the cells. In this case the cells are 30mX30m (Note that we know the units are **meters** because in the `crs` it tells us the units are m)
+* `extent`: the min/max x and y 
+* `crs`: the coordinate reference system
+* `values`: the min/max values this raster contains
+
+I recommend *always* examining a raster after you load it in to make sure the information looks like what you would expect it to be.
+
+You can also check all of this information with separate functions:
+
+```{r checkRastInfo, eval = T, echo = T}
+class(r)
+nrow(r)
+ncol(r)
+ncell(r)
+res(r) # the cell resolution of the raster
+extent(r)
+proj4string(r) # alternatively, we can use crs(r) which will print out a lot more information. proj4string() is sufficient
+summary(values(r)) # put this in summary() so we can get an idea of the spread of values (rather than a list of all of the values themselves)
+```
+
+We can also plot the raster to check that it looks like what we would expect it to be
+
+```{r plotRast, eval = T, echo = T}
+plot(r)
+```
+
+We can also plot a raster with `ggplot2`, but we need to do an extra step of converting it to a data frame first. We'll use the base R function `as.data.frame` and we need to be sure to put `xy = TRUE` in the arguments. After we do that, we can use the function `geom_raster()` within `ggplot`. WIthin the `aes()` function in `geom_raster()`, we need to put the columns that correspond to the x and y locations and what the fill value should represent (in this case, elevation).
+
+```{r plotRastGGplot, eval = T, echo = T}
+r_df <- as.data.frame(r, xy = TRUE)
+head(r_df) # the data frame of a raster contains columns for the x and y locations and the corresponding cell value
+ggplot(r_df) +
+  geom_raster(aes(x = x, y = y, fill = elevation))
+```
+```{r plotRastGGplotPipe, eval = F, echo = T}
+# You can use the pipe to run this process all at once
+r %>%
+  as.data.frame(xy = TRUE) %>%
+  ggplot() +
+  geom_raster(aes(x = x, y = y, fill = elevation))
+```
+
+An important thing to note is that, depending on the size of the raster, it might be too computationally expensive to convert a raster to a data frame and R may give you an error.
+
+(Another reminder that we will not cover how to make these maps look nice, this is just a quick way to check that your raster looks the way that it should)
+
+### Create a raster
+
+
+
+### Save a raster
+
+
+
+

@@ -97,7 +97,7 @@ Vector data are shapes with a geometry that can represent real world features. T
 
 Example with random vertices:
 
-```{r features, echo = F, eval = T, fig.cap = "Figure demonstrating points (red), polylines (black), and polygon (blue)"}
+```{r features, echo = F, eval = T, fig.cap = "Figure demonstrating points (red), polylines (black), and polygon (blue)", fig.align = 'center'}
 
 set.seed(1)
 
@@ -120,7 +120,7 @@ points(pts, pch = 16, cex = 1, col = "darkred")
 
 Or an example with Utah features:
 
-```{r utahExample, eval = T, echo = F, fig.cap = "Figure demonstrating points (major Utah cities), polylines (major Utah highways), and polygons (shape of Utah boundary)"}
+```{r utahExample, eval = T, echo = F, fig.cap = "Figure demonstrating points (major Utah cities), polylines (major Utah highways), and polygons (shape of Utah boundary)", fig.align = 'center'}
 
 utah <- maps::map("state", plot = F, fill = TRUE) %>%
   # turn into sf obj
@@ -132,7 +132,7 @@ ut_city <- us.cities %>%
   dplyr::filter(country.etc == "UT") %>%
   sf::st_as_sf(coords = c("long", "lat"), crs = 4326)
 
-fwy <- st_read("data", "utah_freeway", quiet = T) %>%
+fwy <- st_read("data/utah_freeway", "utah_freeway", quiet = T) %>%
   st_transform(crs = 4326)
 
 p <- ggplot() +
@@ -166,7 +166,7 @@ The important information you need from your vector data are:
 
 Rasters are data represented by **pixels** (or **cells**) where each pixel has its own value. These cell values can be **continuous** (e.g. elevation, temperature, snow depth) or **discrete** (e.g. land cover, habitat type, presence/absence).
 
-```{r contDemo, eval = T, echo = F, fig.cap = "Map showing a raster with continuous values (elevation)"}
+```{r contDemo, eval = T, echo = F, fig.cap = "Map showing a raster with continuous values (elevation)", fig.align = 'center'}
 dem <- raster("data/elevation.tif")
 dem %>%
   as.data.frame(xy = T) %>%
@@ -176,7 +176,7 @@ dem %>%
   labs(fill = "Elevation (m)")
 ```
 
-```{r discDemo, eval = T, echo = F, fig.cap = "Map showing a raster with discrete values (land cover)"}
+```{r discDemo, eval = T, echo = F, fig.cap = "Map showing a raster with discrete values (land cover)", fig.align = 'center'}
 land <- raster("data/landcover.tif")
 land %>%
   as.data.frame(xy = T) %>%
@@ -207,7 +207,7 @@ The important information you need from your raster data are
 
 The cell resolution basically means how "pixel-y" the raster is. A **finer** resolution (meaning the cell size is smaller) will have more detail than a **coarser** resolution (meaning the cell size is larger). For example, compare a raster with a pretty fine resolution (in this case 30m X 30m, meaning that each cells is 30m wide and 30m high)
 
-```{r fine, eval = T, echo = F, fig.cap = "Map showing a raster with fine resolution (30m X 30m)"}
+```{r fine, eval = T, echo = F, fig.cap = "Map showing a raster with fine resolution (30m X 30m)", fig.align = 'center'}
 dem <- raster("data/elevation.tif")
 dem %>%
   as.data.frame(xy = T) %>%
@@ -219,7 +219,7 @@ dem %>%
 
 Compared to the same raster but with a coarser resolution (in this case 300 m X 300 m)
 
-```{r coarse, eval = T, echo = F, fig.cap = "Map showing a raster with fine resolution (300 m X 300 m)"}
+```{r coarse, eval = T, echo = F, fig.cap = "Map showing a raster with fine resolution (300 m X 300 m)", fig.align = 'center'}
 dem <- raster("data/elevation.tif")
 dem_coarse <- aggregate(dem, fact = 10)
 dem_coarse %>%
