@@ -304,7 +304,7 @@ We can also plot the raster to check that it looks like what we would expect it 
 plot(r)
 ```
 
-We can also plot a raster with `ggplot2`, but we need to do an extra step of converting it to a data frame first. We'll use the base R function `as.data.frame` and we need to be sure to put `xy = TRUE` in the arguments. After we do that, we can use the function `geom_raster()` within `ggplot`. WIthin the `aes()` function in `geom_raster()`, we need to put the columns that correspond to the x and y locations and what the fill value should represent (in this case, elevation).
+We can also plot a raster with `ggplot2`, but we need to do an extra step of converting it to a data frame first. We'll use the base R function `as.data.frame` and we need to be sure to put `xy = TRUE` in the arguments. After we do that, we can use the function `geom_raster()` within `ggplot`. Within the `aes()` function in `geom_raster()`, we need to put the columns that correspond to the x and y locations and what the fill value should represent (in this case, elevation).
 
 ```{r plotRastGGplot, eval = T, echo = T}
 r_df <- as.data.frame(r, xy = TRUE)
@@ -323,6 +323,26 @@ r %>%
 An important thing to note is that, depending on the size of the raster, it might be too computationally expensive to convert a raster to a data frame and R may give you an error.
 
 (Another reminder that we will not cover how to make these maps look nice, this is just a quick way to check that your raster looks the way that it should)
+
+### Project a raster
+
+If you noticed, the CRS of this raster is WGS84 UTM12N, as opposed to NAD83 UTM12N that we used earlier for our vector data. 
+
+```{r checkRastProj, eval = T, echo = T}
+proj4string(r)
+```
+
+Like I said before, we want all of our spatial objects to be in the same CRS so that we know that our layers are *truly* stacked on top of the other (for plotting and analysis). For that reason, we need to project this raster to NAD83 UTM12N if we are going to do any comparisons or analysis. To do so, we'll use the function `projectRaster` 
+
+```{r}
+r_2 <- projectRaster(r, crs = "+init=epsg:26912")
+r_2
+```
+
+```{r}
+elev <- raster()
+```
+
 
 ### Create a raster
 
