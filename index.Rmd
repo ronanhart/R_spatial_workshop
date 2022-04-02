@@ -35,7 +35,7 @@ In this workshop we will cover:
 
 We will **NOT** be covering how to make a nice-looking map (for figures, presentations, etc.) That will be covered in the next workshop, so be sure to keep an eye out for that if you want to learn how to make maps in R!
 
---------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
 
 **Goals of this workshop:**
 
@@ -62,7 +62,7 @@ Reproducibility and customization are not unique to R but rather an advantage to
 
 Not to say that programs such as ArcGIS should never be used. On the contrary, since it was the way I first learned GIS, I will sometimes return to it to make a map on the fly or quickly visualize and double-check a polygon or raster. All programs have their pros and cons, and this workshop is to simply add another tool in your spatial analysis toolbox. 
 
---------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
 
 ## Prerequisites, Packages, and Preparation {-}
 

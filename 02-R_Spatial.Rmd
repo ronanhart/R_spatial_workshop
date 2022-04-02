@@ -278,7 +278,7 @@ When we examine the raster (by simply calling the object like we did above), we 
 
 * `class`: the class of the raster (this could be `RasterLayer`, `RasterStack`, or `RasterBrick`)
 * `dimensions`: the number of rows, columns, and cells
-* `resolution`: the size of the cells. In this case the cells are 30mX30m (Note that we know the units are **meters** because in the `crs` it tells us the units are m)
+* `resolution`: the size of the cells
 * `extent`: the min/max x and y 
 * `crs`: the coordinate reference system
 * `values`: the min/max values this raster contains
@@ -317,7 +317,7 @@ ggplot(r_df) +
 r %>%
   as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_raster(aes(x = x, y = y, fill = elevation))
+  geom_raster(aes(x = x, y = y, fill = elevation)) # This requires that you know the column name of the raster values
 ```
 
 An important thing to note is that, depending on the size of the raster, it might be too computationally expensive to convert a raster to a data frame and R may give you an error.
@@ -337,10 +337,6 @@ Like I said before, we want all of our spatial objects to be in the same CRS so 
 ```{r}
 r_2 <- projectRaster(r, crs = "+init=epsg:26912")
 r_2
-```
-
-```{r}
-elev <- raster()
 ```
 
 

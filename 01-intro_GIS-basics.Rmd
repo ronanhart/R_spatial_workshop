@@ -71,7 +71,7 @@ These different combinations of CRS all have their own **EPSG code.** (These cod
 
 For example, the EPSG code for WGS84 latitude/longitude (i.e. no projection) is **4326**, the EPSG code for NAD83 UTM12N is **26912**, and so on. These codes can easily be found on [the Spatial Reference Website](https://www.spatialreference.org/) (or google if you forget what the website is).
 
---------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
 
 ## Spatial Data
 
@@ -172,7 +172,7 @@ dem %>%
   as.data.frame(xy = T) %>%
   ggplot(aes(x = x, y = y, fill = elevation)) + 
   geom_raster() +
-  scale_fill_gradient(low = "grey0", high = "grey100") +
+  scale_fill_gradient(low = "grey0", high = "grey100", na.value = "transparent") +
   labs(fill = "Elevation (m)")
 ```
 
@@ -263,7 +263,7 @@ knitr::include_graphics("pictures/raster_stack.png")
 * Depending on the resolution, they can look pixellated and not visually appealing. For analysis, this would affect computation time and disk space.
 * Raster cells can only contain **one** value (compared to vectors, which can have an entire attribute table). If you want cells to contain more than one value, you would need a stack of rasters, which takes up disk space and computation power.
 
---------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
 
 Now that we know about coordinate reference systems, vectors, and rasters, let's learn how to deal with all of these in R!
 
