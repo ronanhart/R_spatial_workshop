@@ -367,7 +367,7 @@ To compute the Northness or Eastness of a cell, we actually have to do one more 
 aspect_cos <- cos(terrain_stk$aspect)
 aspect_sin <- sin(terrain_stk$aspect)
 aspect_stk <- stack(aspect_cos, aspect_sin)
-names(aspect_stk) <- c("cosine (northnes)", "sine (eastness)")
+names(aspect_stk) <- c("cosine_northness", "sine_eastness")
 aspect_stk
 plot(aspect_stk)
 ```
