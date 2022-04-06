@@ -5,25 +5,19 @@
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Chapter 4 Spatial Analysis | R Spatial Workshop</title>
-  <meta name="description" content="<p>This is a minimal example of using the bookdown package to write a book.
-The HTML output format for this example is bookdown::gitbook,
-set in the _output.yml file.</p>" />
+  <meta name="description" content="This workshop was created for USU’s Ecology Center R workshops on R Spatial." />
   <meta name="generator" content="bookdown 0.25 and GitBook 2.6.7" />
 
   <meta property="og:title" content="Chapter 4 Spatial Analysis | R Spatial Workshop" />
   <meta property="og:type" content="book" />
   
-  <meta property="og:description" content="<p>This is a minimal example of using the bookdown package to write a book.
-The HTML output format for this example is bookdown::gitbook,
-set in the _output.yml file.</p>" />
+  <meta property="og:description" content="This workshop was created for USU’s Ecology Center R workshops on R Spatial." />
   <meta name="github-repo" content="ronanhart/R_spatial_workshop" />
 
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Chapter 4 Spatial Analysis | R Spatial Workshop" />
   
-  <meta name="twitter:description" content="<p>This is a minimal example of using the bookdown package to write a book.
-The HTML output format for this example is bookdown::gitbook,
-set in the _output.yml file.</p>" />
+  <meta name="twitter:description" content="This workshop was created for USU’s Ecology Center R workshops on R Spatial." />
   
 
 <meta name="author" content="Ronan Hart" />
@@ -681,15 +675,16 @@ Figure 4.1: the Uintas are that high-elevation mountain range in the middle righ
 <div class="sourceCode" id="cb229"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb229-1"><a href="spatial-analysis.html#cb229-1" aria-hidden="true" tabindex="-1"></a>aspect_cos <span class="ot">&lt;-</span> <span class="fu">cos</span>(terrain_stk<span class="sc">$</span>aspect)</span>
 <span id="cb229-2"><a href="spatial-analysis.html#cb229-2" aria-hidden="true" tabindex="-1"></a>aspect_sin <span class="ot">&lt;-</span> <span class="fu">sin</span>(terrain_stk<span class="sc">$</span>aspect)</span>
 <span id="cb229-3"><a href="spatial-analysis.html#cb229-3" aria-hidden="true" tabindex="-1"></a>aspect_stk <span class="ot">&lt;-</span> <span class="fu">stack</span>(aspect_cos, aspect_sin)</span>
-<span id="cb229-4"><a href="spatial-analysis.html#cb229-4" aria-hidden="true" tabindex="-1"></a>aspect_stk</span></code></pre></div>
+<span id="cb229-4"><a href="spatial-analysis.html#cb229-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(aspect_stk) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;cosine (northnes)&quot;</span>, <span class="st">&quot;sine (eastness)&quot;</span>)</span>
+<span id="cb229-5"><a href="spatial-analysis.html#cb229-5" aria-hidden="true" tabindex="-1"></a>aspect_stk</span></code></pre></div>
 <pre><code>## class      : RasterStack 
 ## dimensions : 7401, 5606, 41490006, 2  (nrow, ncol, ncell, nlayers)
 ## resolution : 30, 30  (x, y)
 ## extent     : 414639.5, 582819.5, 4428230, 4650260  (xmin, xmax, ymin, ymax)
 ## crs        : +proj=utm +zone=12 +datum=NAD83 +units=m +no_defs 
-## names      : layer.1, layer.2 
-## min values :      -1,      -1 
-## max values :       1,       1</code></pre>
+## names      : cosine..northnes., sine..eastness. 
+## min values :                -1,              -1 
+## max values :                 1,               1</code></pre>
 <div class="sourceCode" id="cb231"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb231-1"><a href="spatial-analysis.html#cb231-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(aspect_stk)</span></code></pre></div>
 <p><img src="_main_files/figure-html/cosSine-1.png" width="672" /></p>
 </div>
