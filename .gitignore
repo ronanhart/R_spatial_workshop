@@ -5,7 +5,6 @@
 *.Rhistory
 /.Rproj.user/
 *.Rproj
-*.html
 *.css
 *.js
 _book/*
