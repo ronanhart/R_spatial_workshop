@@ -26,7 +26,7 @@ The highway feature and the management boundaries feature we've been working on 
 
 ### Other Environmental Rasters
 
-In this workshop we worked with a [DEM (digital elevation model)]((https://www.usgs.gov/3d-elevation-program)) and [snow data]((https://nsidc.org/data/g02158). In my own research I work with these data frequently. I also work with [RAP (Rangeland Analysis Platform)](https://rangelands.app/), which offers biomass and vegetation cover, and [NDVI (Normalized Difference Vegetation Index)](https://modis.gsfc.nasa.gov/data/dataprod/mod13.php), which reports an index of vegetation "green-ness". Many of these rasters can be downloaded from the website's user-interface, **but** they can also be downloaded directly from R!
+In this workshop we worked with a [DEM (digital elevation model)]((https://www.usgs.gov/3d-elevation-program)) and [snow data](https://nsidc.org/data/g02158). In my own research I work with these data frequently. I also work with [RAP (Rangeland Analysis Platform)](https://rangelands.app/), which offers biomass and vegetation cover, and [NDVI (Normalized Difference Vegetation Index)](https://modis.gsfc.nasa.gov/data/dataprod/mod13.php), which reports an index of vegetation "green-ness". Many of these rasters can be downloaded from the website's user-interface, **but** they can also be downloaded directly from R!
 
 This can be a bit complicated if you've never done it before, but fortunately Brian Smith, a PhD in WILD at USU, has already written a [guide](https://bsmity13.github.io/spatial_covars/)!
 

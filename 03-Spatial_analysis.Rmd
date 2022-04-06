@@ -133,7 +133,7 @@ head(plot_data)
 
 Let's join this table to the Plots feature so we could do some spatial analysis and mapping of the collected data. To join two tables together, we need to input the two tables and the name of the column that exists in both tables (so the join function knows how to match attributes together). In this case, that would be the Plots column. 
 ```{r checkPlots, eval = T, echo = T}
-head(plots$Plots)
+head(plots_sf$Plots)
 head(plot_data$Plots)
 ```
 
