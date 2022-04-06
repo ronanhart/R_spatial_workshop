@@ -1,13 +1,15 @@
-Welcome! 
+Welcome to the USU Ecology Center's Workshop on R Spatial!
 
-This is a minimal example of a book based on R Markdown and **bookdown** (https://github.com/rstudio/bookdown). 
+In this workshop we will cover: 
 
-This template provides a skeleton file structure that you can edit to create your book. 
+* GIS Basics
+* Vectors & Rasters and how to manipulate them in R
+* Basic GIS functions
+* (Briefly) where to obtain environmental GIS data
 
-The contents inside the .Rmd files provide some pointers to help you get started, but feel free to also delete the content in each file and start fresh.
+**Goals of this workshop:**
 
-Additional resources:
+* Reiterate the basics of GIS
+* Teach you the processes that you might have learned in ArcGIS or other GIS software that you can code yourself in R
 
-The **bookdown** book: https://bookdown.org/yihui/bookdown/
-
-The **bookdown** package reference site: https://pkgs.rstudio.com/bookdown
+If you would like to follow along, try out some of the examples, and work on some practice exercises, download the file worksheet.R

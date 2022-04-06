@@ -1,6 +1,6 @@
 #####################################X
 #-Ecology Center: R Spatial Workshop-X
-#------------April 4, 2022-----------X
+#------------April 6, 2022-----------X
 #####################################X
 #--------------Worksheet-------------X
 #####################################X
@@ -146,6 +146,18 @@
 # Spatial Analysis ----
 # (Again, you can do any of these with sf or sp or both)
 
+## How do you select specific attributes from a spatial object? ----
+
+
+
+## How do you select features based on location? ----
+
+
+
+## How do you join attributes? ----
+
+
+
 ## How do crop a vector? ----
 
 
@@ -170,6 +182,10 @@
 
 
 
+## How can you compute raster cell algebra? ----
+
+
+
 ## How do you derive slope, aspect, and roughness from a DEM? ----
 
 
@@ -177,26 +193,41 @@
 ### Your Turn ----
 ### The files for these are in the "Exercises" folder
 
-#### 1) Crop the boundary shapefile to the extent of the elevation/snow raster stack ----
+#### 1) Select boundaries that are managed by either BLM or USFS. ----
+#       Select roads that have a speed limit 70mph or higher 
 
 
-#### 2) Select roads in the Utah highways shapefile ----
-#       that have a speed limit of 70mph or higher
-
-#### 1) Extract the elevation and snow data for each plot ----
+#### 2) Select management boundaries that a site is located in -----
 
 
-##### 1a) Join the extracted values to the plot's data frame ----
+#### 3) Crop the boundary shapefile to the extent of the elevation/snow raster stack ----
 
 
-#### 2) Find the area ----
+#### 4) Extract the elevation and snow data for each plot ----
 
 
-#### 3) Derive the flow direction, TPI, and TRI of the elevation raster ----
+##### 4a) Join the extracted values to the plot's data frame ----
+
+
+#### 5) Find the area of National Park land ----
+# Hint: first find which column in the management boundaries feature has the 
+#       attribute indicating it's a National Park
+
+
+#### 6) Find the minimum snow depth value ----
+
+
+#### 7) Derive the flow direction, TPI, and TRI of the elevation raster ----
 # Hint: type ?terrain in the console if you need help
 
 
-#### 3a) Try deriving slope and aspect in degrees (instead of radians)
+#### 7a) Try deriving slope and aspect in degrees (instead of radians)
+
+
+#### 7b) Compute Northness and Eastness from the aspect raster ----
+#        who's units are in degrees
+# Hint: How do you convert radians to degrees and vice versa? You will have to 
+#       do this step first
 
 
 
