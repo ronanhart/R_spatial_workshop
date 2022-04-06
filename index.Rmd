@@ -31,11 +31,12 @@ In this workshop we will cover:
 
 * GIS Basics
 * Vectors & Rasters and how to manipulate them in R
-* three
+* Basic GIS functions
+* (Briefly) where to obtain environmental GIS data
 
 We will **NOT** be covering how to make a nice-looking map (for figures, presentations, etc.) That will be covered in the next workshop, so be sure to keep an eye out for that if you want to learn how to make maps in R!
 
---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 **Goals of this workshop:**
 
@@ -62,7 +63,7 @@ Reproducibility and customization are not unique to R but rather an advantage to
 
 Not to say that programs such as ArcGIS should never be used. On the contrary, since it was the way I first learned GIS, I will sometimes return to it to make a map on the fly or quickly visualize and double-check a polygon or raster. All programs have their pros and cons, and this workshop is to simply add another tool in your spatial analysis toolbox. 
 
---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 ## Prerequisites, Packages, and Preparation {-}
 
@@ -79,7 +80,6 @@ knitr::include_graphics("pictures/help.png")
 2. Install (if needed) and load the following packages:
 
 ```{r installDemo, echo = T, eval = F}
-install.packages("maps")
 install.packages("raster")
 install.packages("rgdal")
 install.packages("rgeos")
@@ -88,8 +88,11 @@ install.packages("sp")
 install.packages("tidyverse")
 ```
 
-```{r packages, echo = T, eval = T, message = F}
+```{r mapsPkg, echo = F, eval = T, message = F}
 library(maps)
+```
+
+```{r packages, echo = T, eval = T, message = F}
 library(raster)
 library(rgdal)
 library(rgeos)
@@ -98,6 +101,6 @@ library(sp)
 library(tidyverse)
 ```
 
-3. (Optional but recommended) Create a new RStudio project. This will make it easier to access files within your code and keep everything organized.
+3. (Optional but recommended) Create a new RStudio project. This will make it easier to access files within your code and keep everything organized. [Here's a guide on how to do that](https://support.rstudio.com/hc/en-us/articles/200526207-Using-RStudio-Projects)
 
 After taking care of that, let's get started!

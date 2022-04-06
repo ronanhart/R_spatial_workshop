@@ -71,7 +71,7 @@ These different combinations of CRS all have their own **EPSG code.** (These cod
 
 For example, the EPSG code for WGS84 latitude/longitude (i.e. no projection) is **4326**, the EPSG code for NAD83 UTM12N is **26912**, and so on. These codes can easily be found on [the Spatial Reference Website](https://www.spatialreference.org/) (or google if you forget what the website is).
 
---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 ## Spatial Data
 
@@ -132,7 +132,7 @@ ut_city <- us.cities %>%
   dplyr::filter(country.etc == "UT") %>%
   sf::st_as_sf(coords = c("long", "lat"), crs = 4326)
 
-fwy <- st_read("data/utah_freeway", "utah_freeway", quiet = T) %>%
+fwy <- st_read("Data/Examples/utah_freeway", "utah_freeway", quiet = T) %>%
   st_transform(crs = 4326)
 
 p <- ggplot() +
@@ -167,7 +167,7 @@ The important information you need from your vector data are:
 Rasters are data represented by **pixels** (or **cells**) where each pixel has its own value. These cell values can be **continuous** (e.g. elevation, temperature, snow depth) or **discrete** (e.g. land cover, habitat type, presence/absence).
 
 ```{r contDemo, eval = T, echo = F, fig.cap = "Map showing a raster with continuous values (elevation)", fig.align = 'center'}
-dem <- raster("data/elevation.tif")
+dem <- raster("Data/Examples/elevation.tif")
 dem %>%
   as.data.frame(xy = T) %>%
   ggplot(aes(x = x, y = y, fill = elevation)) + 
@@ -177,17 +177,17 @@ dem %>%
 ```
 
 ```{r discDemo, eval = T, echo = F, fig.cap = "Map showing a raster with discrete values (land cover)", fig.align = 'center'}
-land <- raster("data/landcover.tif")
+land <- raster("Data/demo/landcover_demo.tif")
 land %>%
   as.data.frame(xy = T) %>%
-  mutate(Landcover = as.factor(case_when(landcover %in% c(138:184) ~ 1,
-                                         landcover %in% c(312:445) ~ 2,
-                                         landcover %in% c(490:495) ~ 3,
-                                         landcover %in% c(529) ~ 4,
-                                         landcover %in% c(554) ~ 5,
-                                         landcover %in% c(557) ~ 6,
-                                         landcover %in% c(579) ~ 7,
-                                         landcover %in% c(581:582) ~ 8))) %>%
+  mutate(Landcover = as.factor(case_when(landcover_demo %in% c(138:184) ~ 1,
+                                         landcover_demo %in% c(312:445) ~ 2,
+                                         landcover_demo %in% c(490:495) ~ 3,
+                                         landcover_demo %in% c(529) ~ 4,
+                                         landcover_demo %in% c(554) ~ 5,
+                                         landcover_demo %in% c(557) ~ 6,
+                                         landcover_demo %in% c(579) ~ 7,
+                                         landcover_demo %in% c(581:582) ~ 8))) %>%
   ggplot(aes(x = x, y = y, fill = Landcover)) + 
   geom_raster() +
   scale_fill_manual(values = c("darkgreen", "darkolivegreen4", "burlywood3", "antiquewhite4", "azure4",
@@ -208,7 +208,6 @@ The important information you need from your raster data are
 The cell resolution basically means how "pixel-y" the raster is. A **finer** resolution (meaning the cell size is smaller) will have more detail than a **coarser** resolution (meaning the cell size is larger). For example, compare a raster with a pretty fine resolution (in this case 30m X 30m, meaning that each cells is 30m wide and 30m high)
 
 ```{r fine, eval = T, echo = F, fig.cap = "Map showing a raster with fine resolution (30m X 30m)", fig.align = 'center'}
-dem <- raster("data/elevation.tif")
 dem %>%
   as.data.frame(xy = T) %>%
   ggplot(aes(x = x, y = y, fill = elevation)) + 
@@ -219,8 +218,7 @@ dem %>%
 
 Compared to the same raster but with a coarser resolution (in this case 300 m X 300 m)
 
-```{r coarse, eval = T, echo = F, fig.cap = "Map showing a raster with fine resolution (300 m X 300 m)", fig.align = 'center'}
-dem <- raster("data/elevation.tif")
+```{r coarse, eval = T, echo = F, fig.cap = "Map showing a raster with coarse resolution (300 m X 300 m)", fig.align = 'center'}
 dem_coarse <- aggregate(dem, fact = 10)
 dem_coarse %>%
   as.data.frame(xy = T) %>%
@@ -263,12 +261,6 @@ knitr::include_graphics("pictures/raster_stack.png")
 * Depending on the resolution, they can look pixellated and not visually appealing. For analysis, this would affect computation time and disk space.
 * Raster cells can only contain **one** value (compared to vectors, which can have an entire attribute table). If you want cells to contain more than one value, you would need a stack of rasters, which takes up disk space and computation power.
 
---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 Now that we know about coordinate reference systems, vectors, and rasters, let's learn how to deal with all of these in R!
-
-## Cite
-
-https://cengel.github.io/R-spatial/
-https://gisgeography.com/spatial-data-types-vector-raster/ 
-https://www.bookdown.org/mcwimberly/gdswr-book/ 

@@ -1,11 +1,463 @@
 # Spatial Analysis
 
+Now let's do some analysis with the data we've acquired already: 
+
+* Sites point data `sites_sf`
+* Utah freeways `fwy_sf_proj`
+
+We also have some data that I've included in the exercises portion of the "worksheet": a different elevation + snow raster stack (this one is in the NW corner of Utah), a set of plots as a point feature, and a polygon feature of boundaries in Utah and who manages them:
+
+```{r loadRast , eval = T, echo = F}
+elev_snow_stk <- stack("Data/demo/elev_snow_nw_stack.tif")
+names(elev_snow_stk) <- c("elevation", "swe", "snow_depth")
+```
+
+```{r showRaster, eval = T, echo = T}
+elev_snow_stk
+plot(elev_snow_stk)
+```
+
+```{r makePlots, eval = T, echo = F}
+plots_sf <- read.csv("Data/Exercises/Plots_location.csv") %>%
+  st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) %>%
+  st_transform(crs = 26912)
+plots_sp <- as(plots_sf, "Spatial")
+```
+```{r showPlots, eval = T, echo = T}
+head(plots_sf)
+```
+
+```{r loadManage, eval = T, echo = T}
+manage_sf <- st_read("data/Exercises/UT_land_management", "UT_land_management",
+                    quiet = T) %>%
+  st_transform(crs = 26912)
+manage_sp <- as(manage_sf, "Spatial")
+```
+```{r showBound, eval = T, echo = F}
+head(manage_sf)[,1:5]
+manage_sf %>%
+  ggplot() +
+  geom_sf(aes(fill = OWNER), size = 0.1)
+```
+
+Let's plot one of the rasters with our sites point vector and Utah highways line vector. To plot just one raster layer in a stack we can either index it with double brackets or with the name:
+
+```{r indexEx, eval = T, echo = T}
+# these are different ways to get the same raster layer
+elev_snow_stk[[1]]
+
+elev_snow_stk$elevation
+```
+
+```{r projSilent, eval = T, echo = F}
+fwy_sp_proj <- spTransform(fwy_sp, "+init=epsg:26912")
+sites_sf_proj <- st_transform(sites_sf, 26912)
+```
+
+```{r plotAll, eval = T, echo = T}
+plot(elev_snow_stk$elevation)
+lines(fwy_sp_proj, lwd = 2) # lines() will plot the polyline on top of the plot (instead of drawing a new plot)
+points(sites_sp_proj, pch = 16) # points() will do the same as lines() except with point data
+points(plots_sp, pch = 3)
+```
+
+(This can also be done with `ggplot` using `as.data.frame` but in this case the raster may be too large for R to convert to a dataframe and plot)
+
+Let's start on some analysis and computations that we can run on these data.
+
+## Selecting Attributes
+
+Perhaps you have vector data and you want to select only certain attributes or attributes that reach a focal threshold. To do so we need to set up a logical statement, and we can do this in base R or in `tidyverse`.
+
+Let's say we want to select boundaries that are operated by BLM. In the shapefile of management boundaries, this information is located in the column "AGENCY"
+
+```{r agency, eval = T, echo = T}
+unique(manage_sf$AGENCY)
+```
+In base R we can use the function `which` and in `tidyverse` we can use the function `filter`
+
+```{r selectBLM, eval = T, echo = T}
+# base R
+blm_boundary <- manage_sf[which(manage_sf$AGENCY == "BLM"), ] # you can do this with sp objects too 
+
+# tidyverse
+blm_boundary <- manage_sf %>% # you cannot do this with sp objects
+  filter(AGENCY == "BLM")
+
+ggplot() +
+  geom_sf(data = manage_sf, col = "grey", size = 0.1) +
+  geom_sf(data = blm_boundary, fill = "red", col = "grey30",
+          alpha = 0.8, size = 0.1)
+```
+
+Using these functions, you can set up any logical statement using `==`, `%in%`, `>`, `>=`, `<`, `<=`, or `!` and select for the specific attributes you need.
+
+## Select features by location
+
+Let's make select the management boundaries based on if they are intersected by a major highway. For `sf` we'll use the function `st_intersect` and for `sp` we'll use
+
+```{r selectIntersect, eval = T, echo = T}
+manage_roads <- st_intersects(fwy_sf_proj, manage_sf) # the first argument is the target shape and the second argument the shape we're selecting from
+class(manage_roads)
+```
+The output is an `sgbp` object, or "Sparse Geometry Binary Predicate". Basically it returns a list of vectors of integers, which refer to the indices of each polygon that intersects. 
+
+```{r dimensions, eval = T, echo = T}
+dim(manage_roads)
+nrow(fwy_sf_proj)
+nrow(manage_sf)
+```
+So the dimensions of this list are the the number of rows in the target shape (the highways) and the number of rows in the intersecting shape (the management boundaries). If we wanted to know the specifc index of a specific road that intersected with a management boundary, it would be useful to keep all of these indices seperate. Since we just want to know which boundaries intersect a road, we can collapse this whole list together.
+
+```{r intersect, eval = T, echo = T}
+manage_roads_index <- unique(unlist(manage_roads)) # just pull the unique indices
+manage_roads_intersect <- manage_sf[manage_roads_index, ]
+
+ggplot() +
+  geom_sf(data = manage_sf, col = "grey", size = 0.1) +
+  geom_sf(data = manage_roads_intersect, fill = "red", col = "grey30",
+          alpha = 0.8, size = 0.1) +
+  geom_sf(data = fwy_sf_proj, col = "black", size = 1)
+```
+
+If you look at the help file for `?st_intersects`, you'll see there are a lot of different functions that select features based on another feature.
+
+## Joining Attributes
+
+Let's load in a table of some data collected at each plot
+
+```{r loadPlotData, eval = T, echo = F}
+plot_data <- read.csv("data/Exercises/Plots_data.csv")
+head(plot_data)
+```
+
+Let's join this table to the Plots feature so we could do some spatial analysis and mapping of the collected data. To join two tables together, we need to input the two tables and the name of the column that exists in both tables (so the join function knows how to match attributes together). In this case, that would be the Plots column. 
+```{r checkPlots, eval = T, echo = T}
+head(plots$Plots)
+head(plot_data$Plots)
+```
+
+We can use the `tidyverse`'s `join` functions. (If you don't know how joins work, I would recommend looking at the help file by typing `?left_join` in the console)
+
+```{r joinPlots, eval = T, echo = T}
+plots_join <- left_join(plots_sf, plot_data, by = "Plots")
+head(plots_join)
+```
+
+Great! At this point you could then do some spatial analysis based on location, or make a map based on average biomass, for example. However, that's outside the scope of this workshop.
+
+Joining two tables together is a valuable tool to know, not just for GIS but for any data management.
+
 ## Cropping
 
-## Distance
+### Cropping a vector {-}
+
+If you noticed earlier, the highway polyline runs outside of the elevation raster. What if we want to crop the vector so that it falls only within the raster?
+
+For `sf` we'll use the function `st_crop` (which requires an object of class `sf` or `sfc` and the min/max x & y extent we want to crop the feature to). For `sp` we'll use the function `crop`. (`crop` is actually in the `raster` package, but remember that `raster` is dependent on `sp`? That means that some `raster` functions can be used on `Spatial*` objects too). For `crop` we need the object we're cropping and the extent we're cropping to (or an object that an extent can be derived from, in this case the raster itself)
+
+```{r cropRoads, eval = T, echo = T, warning = F}
+# sf:
+# First we need the extent of the raster that is compatible with sf. For that we'll use st_bbox()
+rast_ext <- st_bbox(extent(elev_snow_stk))
+rast_ext
+fwy_crop_sf <- st_crop(fwy_sf_proj, rast_ext)
+
+# sp:
+fwy_crop_sp <- crop(fwy_sp_proj, elev_snow_stk)
+```
+
+```{r checkCrop, eval = T, echo = F}
+plot(elev_snow_stk$elevation)
+lines(fwy_crop_sp, lwd = 2)
+```
+
+### Cropping a raster {-}
+
+We can also easily crop a raster. Let's say we wanted to crop our raster stack down to only the area around our site that's in the Uintas
+
+```{r plotSites, eval = T, echo = T, fig.cap = "the Uintas are that high-elevation mountain range in the middle right of this map", fig.align = 'center'}
+plot(elev_snow_stk$elevation)
+points(sites_sp_proj, pch = 16)
+```
+
+First we need to find out what site number that is. We'll use the `text()` function. There is a `text()` function for base R plotting, but the `raster` package adapted that function to plot text from rasters and `Spatial*` objects. Let's use that function, so we need to specify which package it comes from using `raster::`
+
+```{r checkSiteN, eval = T, echo = T}
+plot(elev_snow_stk$elevation)
+raster::text(sites_sp_proj, labels = "Site", halo = T)
+```
+
+Site 8! Let's filter our spatial data to just this site. 
+
+```{r filterSite8, eval = T, echo = T}
+# base R
+site_8 <- sites_sf_proj[which(sites_sf_proj$Site == 8), ] # remember that you can use this method for sp objects too
+
+# tidyverse
+site_8 <- sites_sf_proj %>%
+  filter(Site == 8)
+
+site_8
+```
+
+But we don't want to crop the raster down to a single point, so let's first make a buffer (5kmX5km) around this specific site. We'll use `st_buffer()` to do so.
+
+```{r buffer, eval = T, echo = T}
+buffer <- st_buffer(site_8, dist = 5000) # units are in meters
+buffer
+
+ggplot() +
+  geom_sf(data = buffer) +
+  geom_sf(data = site_8, col = "red", size = 2) +
+  coord_sf(datum = st_crs(26912)) # this plots the axes to UTM coordinates instead of latlong coordinates
+```
+
+To crop a raster, we'll use the same function we used to crop a `Spatial*` object: `crop`. Remember that I said earlier that any function we perform on a stack of rasters will run for every raster in that stack!
+
+Earlier when we used `crop`, we could just put in the object itself and the function would automatically crop to the extent of that object. But that only works for objects of class `Raster*`, `Spatial*`, or `Extent`. Because our buffer is of class `sf`, we can't just put the object itself in. Instead we need to put in its extent (*or* you could convert the buffer to a `Spatial*` object)
+
+```{r cropRast, eval = T, echo = T}
+stack_crop <- crop(elev_snow_stk, extent(buffer))
+stack_crop
+plot(stack_crop)
+```
+
+```{r checkCropR, eval = T, echo = F}
+buff_sp <- as(buffer, "Spatial")
+plot(stack_crop$elevation)
+lines(buff_sp, lwd = 2)
+raster::text(sites_sp_proj, labels = "Site", halo = T)
+```
 
 ## Extract Raster Values
 
-## Environmental Raster Manipulation
+What if we need to get data from our rasters at our specific site locations? We can use the function `extract()`.
 
-### Elevation, Slope, Aspect {-}
+Let's load a landcover raster so we can classify the habitat types of our sites
+
+```{r landcover, eval = T, echo = T}
+landcover <- raster("Data/Examples/landcover.tif")
+landcover
+plot(landcover)
+raster::text(sites_sp_proj, labels = "Site", halo = T)
+```
+
+`extract` returns a vector whose indices match the indices of the spatial object. We could leave it as a vector, or we could automatically attach it to the dataframe using `$`
+
+```{r extract, eval = T, echo = T}
+sites_sf_proj$land_value <- raster::extract(landcover, sites_sp_proj)
+sites_sf_proj
+```
+
+Ok but what do these numbers mean? Our landcover raster is a categorical raster, so these numbers aren't actually real numbers but represent a habitat type. Fortunately we have a dataframe indicating what these numbers mean.
+
+```{r landInfo, eval = T, echo = T}
+land_info <- read.csv("Data/Examples/landcover_info.csv")
+head(land_info)[,1:5]
+```
+
+The column "Value" corresponds to the cell value we extracted from the raster. We can use what we learned earlier how to join two tables together, but first we need to make sure the ID column ("Value") for both tables are named the same.
+
+```{r join, eval = T, echo = T}
+sites_sf_land <- sites_sf_proj %>%
+  rename(Value = land_value) %>% # rename the column so it matches in both tables
+  left_join(land_info, by = "Value") # join by the column "Value"
+head(sites_sf_land)[,1:6]
+```
+```{r plotLandPoints, eval = T, echo = F}
+sites_sf_land %>%
+  ggplot() +
+  geom_sf(data = utah) +
+  geom_sf(aes(col = ClassName), size = 2)
+```
+
+Awesome!
+
+## Distance
+
+Let's say we needed to know how far from a major road each of our sites are. We'll use the function `st_distance` for our `sf` objects. We simply need to input the focal feature (the sites) and the feature 
+
+```{r distance, eval = T, eval = T}
+dist <- st_distance(sites_sf_proj, fwy_sf_proj)
+dim(dist)
+```
+
+What did this do? Why are there so many columns? Remember that our Utah highways feature is a **poly**line, meaning it's a line of lines. If we look at the dimensions of the highways feature:
+
+```{r check dim, eval = T, echo = T}
+nrow(fwy_sf_proj)
+```
+
+There are **1849** lines (i.e. roads) that make up this whole feature. So `st_distance` found the distance for each site (the number of rows) for *every* road (the number of columns). This *could* be useful information, but presumably we want just the distance of the *closest* road. To find that distance, we'll have to do some data frame manipulation.
+
+```{r findShortestDist, eval = T, echo = T}
+dist_df <- as.data.frame(dist)
+dist_df[1:5, 1:5]
+
+colnames(dist_df) <- fwy_sf_proj$UNIQUE_ID
+dist_df <- dist_df %>%
+  mutate(Site = sites_sf_proj$Site) %>% # add a column for Sites
+  relocate(Site, .before = colnames(dist_df)[1]) # move to the front of the dataframe
+dist_df[1:5, 1:5]
+
+dist_df <- dist_df %>%
+  pivot_longer(cols = -Site, names_to = "Road_Name")
+head(dist_df)
+
+dist_df <- dist_df %>%
+  group_by(Site) %>%
+  mutate(Distance = min(value)) %>%
+  filter(value == Distance) %>%
+  dplyr::select(-value)
+head(dist_df)
+```
+
+We could then join this information to our Sites feature
+
+```{r joinDistSites, eval = T, echo = T}
+sites_sf_proj <- left_join(sites_sf_proj, dist_df, by = "Site")
+head(sites_sf_proj)
+```
+
+(Note that if you look at the help file i.e. `?st_distance`, there are other functions to calculate geometric measurements for `sf` objects: `st_area` and `st_length`)
+
+
+## Raster Cell Stats
+
+In my research I often have to perform cell algebra or focal statistics. Maybe you need to know the average elevation or the total herbaceous biomass within a certain area. The way to get these values are with the function `cellStats`. We simply need to input the raster and the `stat` function: sum, mean, min, max, sd, or a homemade function. Let's say we need to calculate the average elevation, SWE, and snow depth within the buffer we made earlier. 
+
+```{r cellStats, eval = T, echo = T}
+cellStats(stack_crop, stat = "mean")
+```
+
+Note that there's an option to include `na.rm` in the arguments. `na.rm = TRUE` is the default.
+
+## Calculate Terrain Characteristics 
+
+From a DEM (digital elevation model) we can obtain a lot of other rasters that are likely useful in GIS research. The elevation raster we've been working with is a DEM. From a DEM we can derive other terrain characteristics : 
+
+* Slope: Measurement of "steepness"
+* Aspect: Measurements of "Northness" and "Eastness"
+* Flow direction of water: the direction of the greatest drop in elevation
+* Terrain Ruggedness Index (TRI): the mean of the absolute differences between the value of a cell and the value of its 8 surrounding cells
+* Topographic Position Index (TPI): the difference between the value of a cell and the mean value of its 8 surrounding cells
+* Roughness: the difference between the maximum and the minimum value of a cell and its 8 surrounding cells
+
+These definitions came from the help file for the function we can use to derive these characteristics: `terrain()`. 
+
+```{r terrain, eval = F, echo = T}
+slope <- terrain(elev_snow_stk$elevation, opt = "slope", unit = "radians")
+aspect <- terrain(elev_snow_stk$elevation, opt = "aspect", unit = "radians")
+roughness <- terrain(elev_snow_stk$elevation, opt = "roughness")
+terrain_stk <- stack(elev_snow_stk$elevation, slope, aspect, roughness)
+terrain_stk
+```
+```{r loadStk, eval = T, echo = F}
+terrain_stk <- stack("Data/demo/dem/terrain_stk.tif")
+names(terrain_stk) <- c("elevation", "slope", "aspect", "flowdir", "TPI", "TRI", "roughness")
+terrain_stk_2 <- stack(terrain_stk$elevation, terrain_stk$slope, terrain_stk$aspect, terrain_stk$roughness)
+terrain_stk_2
+plot(terrain_stk_2)
+```
+
+To compute the Northness or Eastness of a cell, we actually have to do one more step to the aspect raster. Aspect is a circular measurement (which is why its units are in degrees or radians), so (if you remember how trigonometry works) to calculate northness and eastness we need to use cosine and sine respectively. Because our units are in radians, we can simply apply the `cos()` and `sin()` functions directly to the aspect raster.
+
+```{r cosSine, eval = T, echo = T}
+aspect_cos <- cos(terrain_stk$aspect)
+aspect_sin <- sin(terrain_stk$aspect)
+aspect_stk <- stack(aspect_cos, aspect_sin)
+aspect_stk
+plot(aspect_stk)
+```
+
+## A Note About Loops
+
+Learning all these functions is all well and good, but what if you have to perform them all on multiple features or rasters? Of course, you can always copy and paste, but that can soon become confusing and messy and cause your code to be inefficient. The better way to address this is with loops! `for` loops and `lapply` are lifesavers and I use them in all of my code. A previous workshop went into more depth on how to use loops, so I won't go over them in too much detail. But I do want to show some ways you can use them for GIS applications.
+
+(These code chunks are for demonstration only, these data and directories don't actually exist)
+
+```{r loopEx, eval = F, echo = T}
+# Example 1: Load a set of shapefiles and find the area for each
+filenames <- list.files(dir) # get a list of shapefile names in a directory
+
+area_list <- c() # create an empty vector for the areas to live in 
+
+for(i in 1:length(filenames)){
+  # load the shapefile
+  shp <- st_read(filenames[i])
+  
+  # calculate the area
+  area <- st_area(shp)
+  
+  # put the area into the vector
+  area_list <- c(area_list, area)
+}
+
+# -----------------------------------------------------------------------------X
+
+# Example 2: Load a set of shapefiles, generate a buffer for each, and calculate the  #            mean value of a raster within that buffer and the focal feature
+
+filenames <- list.files(dir) # get a list of shapefile names in a directory
+r <- raster(raster_filename) # load a raster
+
+lapply(filenames, function(fn){
+  # load a shapefile
+  shp <- st_read(fn)
+  
+  # generate a 10kmX10km buffer 
+  buffer <- st_buffer(shp, dist = 10000)
+  
+  # crop the raster to the shape and the buffer
+  r_shp <- crop(r, extent(shp))
+  r_buffer <- crop(r, extent(buffer))
+  
+  # calculate the mean value of the raster within the buffer and the feature
+  r_shp_mean <- cellStats(r_shp, stat = "mean", na.rm = TRUE)
+  r_buff_mean <- cellStats(r_shp, stat = "mean", na.rm = TRUE)
+  
+  # return both means in a list
+  return(list(r_shp_mean, r_buff_mean))
+})
+
+# -----------------------------------------------------------------------------X
+
+# Example 3: Generate a raster of the sum from a set of RasterStacks
+#            and then save the output raster
+filenames <- list.files(dir) # get a list of raster files in a directory
+out_names <- paste0(filenames, "_sum")
+
+lapply(1:length(filenames), function(i){
+  # load RasterStak
+  stk <- stack(filenames[i])
+  
+  # create a raster that is the sum of all layers in the stack
+  sum <- calc(stk, fun = sum)
+  sum <- sum(stk) # these two operations are equivalent
+  
+  writeRaster(sum, out_names[i], format = "GTiff")
+})
+
+# -----------------------------------------------------------------------------X
+
+# Example 4: Pull the number of zeros in a set of rasters
+filenames <- list.files(dir) # get a list of raster files in a directory
+lapply(filenames, function(fn){
+  # load raster
+  rast <- raster(fn)
+  
+  # get the number of zeros in the raster
+  n_0 <- getValues(rast) == 0 %>%
+      which() %>%
+      length()
+  return(n_0)
+})
+
+```
+
+Even more efficient would be to run these in parallel, but that is way beyond the scope of this workshop
+
+---------------------------------------------------------------------------------
+
+I hope these functions helped you! The next chapter goes over some ways of obtaining the data we worked on today.
+
