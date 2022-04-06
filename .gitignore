@@ -5,12 +5,6 @@
 *.Rhistory
 /.Rproj.user/
 *.Rproj
-*.css
-*.js
 _book/*
-*.bib
-*.tex
 Data/*
 pictures/*
-*.ttf
-*.json
